@@ -106,10 +106,10 @@ def _add_log_prob_and_value_to_episodes_recurrent(
     for transition, c_log_prob, d_log_prob, v, next_v in zip(
         flat_transitions, c_log_probs, d_log_probs, flat_vs, flat_next_vs
     ):
-        transition["c_log_prob"] = float(c_log_prob)
-        transition["d_log_prob"] = float(d_log_prob)
-        transition["v_pred"] = float(v)
-        transition["next_v_pred"] = float(next_v)
+        transition["c_log_prob"] = float(c_log_prob.item())
+        transition["d_log_prob"] = float(d_log_prob.item())
+        transition["v_pred"] = float(v.item())
+        transition["next_v_pred"] = float(next_v.item())
 
 
 def _add_log_prob_and_value_to_episodes(
