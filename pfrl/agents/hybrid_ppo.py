@@ -683,39 +683,25 @@ class HybridPPO(agent.AttributeSavingMixin, agent.BatchAgent):
     def _lossfun(
         self, entropy, vs_pred, c_log_probs, d_log_probs, vs_pred_old, c_log_probs_old, d_log_probs_old, advs, vs_teacher
     ):
-        # prob_ratio = torch.exp(log_probs - log_probs_old)
+        
+        c_prob_ratio = torch.exp(c_log_probs - c_log_probs_old)
+        d_prob_ratio = torch.exp(d_log_probs - d_log_probs_old)
 
         #Hybrid
-        total_prob_ratio = c_log_probs + d_log_probs
-        total_prob_ratio_old = c_log_probs_old + d_log_probs_old
-
-        prob_ratio = torch.exp(total_prob_ratio - total_prob_ratio_old)
-        
-        loss_policy = -torch.mean(
-            torch.min(
-                prob_ratio * advs,
-                torch.clamp(prob_ratio, 1 - self.clip_eps, 1 + self.clip_eps) * advs,
-            ),
+        c_loss_policy = -torch.mean(
+           torch.min(
+               c_prob_ratio * advs,
+               torch.clamp(c_prob_ratio, 1 - self.clip_eps, 1 + self.clip_eps) * advs,
+           ),
+        )
+        d_loss_policy = -torch.mean(
+           torch.min(
+               d_prob_ratio * advs,
+               torch.clamp(d_prob_ratio, 1 - self.clip_eps, 1 + self.clip_eps) * advs,
+           ),
         )
         
-        #c_prob_ratio = torch.exp(c_log_probs - c_log_probs_old)
-        #d_prob_ratio = torch.exp(d_log_probs - d_log_probs_old)
-
-        #Hybrid
-        #c_loss_policy = -torch.mean(
-        #    torch.min(
-        #        c_prob_ratio * advs,
-        #        torch.clamp(c_prob_ratio, 1 - self.clip_eps, 1 + self.clip_eps) * advs,
-        #    ),
-        #)
-        #d_loss_policy = -torch.mean(
-        #    torch.min(
-        #        d_prob_ratio * advs,
-        #        torch.clamp(d_prob_ratio, 1 - self.clip_eps, 1 + self.clip_eps) * advs,
-        #    ),
-        #)
-        
-        #loss_policy = c_loss_policy + d_loss_policy
+        loss_policy = c_loss_policy + d_loss_policy
 
         if self.clip_eps_vf is None:
             loss_value_func = F.mse_loss(vs_pred, vs_teacher)
